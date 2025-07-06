@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:  # Allows manual trigger if needed
 
 jobs:
   build-frontend:
@@ -12,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Check if frontend directory changed
+      - name: Detect changes in frontend
         id: changes
         uses: dorny/paths-filter@v3
         with:
@@ -20,30 +21,32 @@ jobs:
             frontend:
               - 'frontend/**'
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
+        if: steps.changes.outputs.frontend == 'true'
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to ECR
+      - name: Login to Amazon ECR
+        if: steps.changes.outputs.frontend == 'true'
         run: |
-          echo "🔐 Logging in to AWS ECR..."
           aws ecr get-login-password | docker login --username AWS --password-stdin \
           ${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build and Push Frontend Docker Image
+      - name: Build and Push Frontend Image
+        if: steps.changes.outputs.frontend == 'true'
         working-directory: frontend
         run: |
-          if [[ "${{ steps.changes.outputs.frontend }}" == "true" ]]; then
-            IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:frontend-latest
-            echo "🛠️ Changes detected in frontend. Building $IMAGE..."
-            docker build -t $IMAGE .
-            docker push $IMAGE
-          else
-            echo "✅ No changes in frontend, skipping build & push."
-          fi
+          IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:frontend-latest
+          echo "🛠️ Building $IMAGE..."
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+      - name: Skip Frontend Build
+        if: steps.changes.outputs.frontend != 'true'
+        run: echo "✅ No changes in frontend — skipping build."
 
   build-backend:
     runs-on: ubuntu-latest
@@ -51,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Check if backend directory changed
+      - name: Detect changes in backend
         id: changes
         uses: dorny/paths-filter@v3
         with:
@@ -59,27 +62,29 @@ jobs:
             backend:
               - 'backend/**'
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
+        if: steps.changes.outputs.backend == 'true'
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to ECR
+      - name: Login to Amazon ECR
+        if: steps.changes.outputs.backend == 'true'
         run: |
-          echo "🔐 Logging in to AWS ECR..."
           aws ecr get-login-password | docker login --username AWS --password-stdin \
           ${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build and Push Backend Docker Image
+      - name: Build and Push Backend Image
+        if: steps.changes.outputs.backend == 'true'
         working-directory: backend
         run: |
-          if [[ "${{ steps.changes.outputs.backend }}" == "true" ]]; then
-            IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:backend-latest
-            echo "🛠️ Changes detected in backend. Building $IMAGE..."
-            docker build -t $IMAGE .
-            docker push $IMAGE
-          else
-            echo "✅ No changes in backend, skipping build & push."
-          fi
+          IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:backend-latest
+          echo "🛠️ Building $IMAGE..."
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+      - name: Skip Backend Build
+        if: steps.changes.outputs.backend != 'true'
+        run: echo "✅ No changes in backend — skipping build."
