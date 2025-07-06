@@ -7,49 +7,73 @@ on:
 
 jobs:
   build-frontend:
-    if: ${{ github.event_name == 'push' && contains(join(github.event.commits.*.modified), 'frontend/') }}
     runs-on: ubuntu-latest
+    name: Build & Push Frontend Docker Image
     steps:
       - uses: actions/checkout@v3
 
+      - name: Check if frontend directory changed
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+
       - name: Configure AWS Credentials
+        if: steps.changes.outputs.frontend == 'true'
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
+        if: steps.changes.outputs.frontend == 'true'
         run: |
           aws ecr get-login-password | docker login --username AWS --password-stdin \
-          223319878711.dkr.ecr.ap-south-1.amazonaws.com
+          ${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build & Push Frontend Docker Image
+      - name: Build and Push Frontend Docker Image
+        if: steps.changes.outputs.frontend == 'true'
         working-directory: frontend
         run: |
-          docker build -t 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:frontend-latest .
-          docker push 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:frontend-latest
+          IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:frontend-latest
+          docker build -t $IMAGE .
+          docker push $IMAGE
 
   build-backend:
-    if: ${{ github.event_name == 'push' && contains(join(github.event.commits.*.modified), 'backend/') }}
     runs-on: ubuntu-latest
+    name: Build & Push Backend Docker Image
     steps:
       - uses: actions/checkout@v3
 
+      - name: Check if backend directory changed
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+
       - name: Configure AWS Credentials
+        if: steps.changes.outputs.backend == 'true'
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
+        if: steps.changes.outputs.backend == 'true'
         run: |
           aws ecr get-login-password | docker login --username AWS --password-stdin \
-          223319878711.dkr.ecr.ap-south-1.amazonaws.com
+          ${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: Build & Push Backend Docker Image
+      - name: Build and Push Backend Docker Image
+        if: steps.changes.outputs.backend == 'true'
         working-directory: backend
         run: |
-          docker build -t 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:backend-latest .
-          docker push 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:backend-latest
+          IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:backend-latest
+          docker build -t $IMAGE .
+          docker push $IMAGE
