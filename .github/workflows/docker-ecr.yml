@@ -21,7 +21,6 @@ jobs:
               - 'frontend/**'
 
       - name: Configure AWS Credentials
-        if: steps.changes.outputs.frontend == 'true'
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -29,18 +28,22 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
-        if: steps.changes.outputs.frontend == 'true'
         run: |
+          echo "🔐 Logging in to AWS ECR..."
           aws ecr get-login-password | docker login --username AWS --password-stdin \
           ${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       - name: Build and Push Frontend Docker Image
-        if: steps.changes.outputs.frontend == 'true'
         working-directory: frontend
         run: |
-          IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:frontend-latest
-          docker build -t $IMAGE .
-          docker push $IMAGE
+          if [[ "${{ steps.changes.outputs.frontend }}" == "true" ]]; then
+            IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:frontend-latest
+            echo "🛠️ Changes detected in frontend. Building $IMAGE..."
+            docker build -t $IMAGE .
+            docker push $IMAGE
+          else
+            echo "✅ No changes in frontend, skipping build & push."
+          fi
 
   build-backend:
     runs-on: ubuntu-latest
@@ -57,7 +60,6 @@ jobs:
               - 'backend/**'
 
       - name: Configure AWS Credentials
-        if: steps.changes.outputs.backend == 'true'
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -65,15 +67,19 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to ECR
-        if: steps.changes.outputs.backend == 'true'
         run: |
+          echo "🔐 Logging in to AWS ECR..."
           aws ecr get-login-password | docker login --username AWS --password-stdin \
           ${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       - name: Build and Push Backend Docker Image
-        if: steps.changes.outputs.backend == 'true'
         working-directory: backend
         run: |
-          IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:backend-latest
-          docker build -t $IMAGE .
-          docker push $IMAGE
+          if [[ "${{ steps.changes.outputs.backend }}" == "true" ]]; then
+            IMAGE=${{ secrets.ECR_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPO_NAME }}:backend-latest
+            echo "🛠️ Changes detected in backend. Building $IMAGE..."
+            docker build -t $IMAGE .
+            docker push $IMAGE
+          else
+            echo "✅ No changes in backend, skipping build & push."
+          fi
