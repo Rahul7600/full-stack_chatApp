@@ -1,0 +1,55 @@
+name: Selective CI/CD to AWS ECR (Single Repo)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-frontend:
+    if: ${{ github.event_name == 'push' && contains(join(github.event.commits.*.modified), 'frontend/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin \
+          223319878711.dkr.ecr.ap-south-1.amazonaws.com
+
+      - name: Build & Push Frontend Docker Image
+        working-directory: frontend
+        run: |
+          docker build -t 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:frontend-latest .
+          docker push 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:frontend-latest
+
+  build-backend:
+    if: ${{ github.event_name == 'push' && contains(join(github.event.commits.*.modified), 'backend/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin \
+          223319878711.dkr.ecr.ap-south-1.amazonaws.com
+
+      - name: Build & Push Backend Docker Image
+        working-directory: backend
+        run: |
+          docker build -t 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:backend-latest .
+          docker push 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo:backend-latest
