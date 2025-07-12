@@ -1,9 +1,13 @@
-name: Fullstack ChatApp CI/CD to ECR (Separate Repos)
+name: Fullstack ChatApp CI/CD to ECR (Latest + Version Tag)
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag version (e.g. v1.0.0)'
+        required: true
 
 jobs:
   build-frontend:
@@ -21,11 +25,13 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push frontend:latest
+      - name: Build and push frontend (latest + version)
         run: |
           IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
-          docker build -t $IMAGE_URI:latest ./frontend
+          VERSION=${{ github.event.inputs.version }}
+          docker build -t $IMAGE_URI:latest -t $IMAGE_URI:$VERSION ./frontend
           docker push $IMAGE_URI:latest
+          docker push $IMAGE_URI:$VERSION
 
   build-backend:
     runs-on: ubuntu-latest
@@ -42,8 +48,10 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push backend:latest
+      - name: Build and push backend (latest + version)
         run: |
           IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
-          docker build -t $IMAGE_URI:latest ./backend
+          VERSION=${{ github.event.inputs.version }}
+          docker build -t $IMAGE_URI:latest -t $IMAGE_URI:$VERSION ./backend
           docker push $IMAGE_URI:latest
+          docker push $IMAGE_URI:$VERSION
