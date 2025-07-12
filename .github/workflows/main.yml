@@ -22,7 +22,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set build number
+      - name: Set build number (short SHA)
         run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Build, tag, and push frontend image
@@ -49,7 +49,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set build number
+      - name: Set build number (short SHA)
         run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Build, tag, and push backend image
@@ -59,4 +59,3 @@ jobs:
           docker tag $IMAGE_URI:$BUILD_NUM $IMAGE_URI:latest
           docker push $IMAGE_URI:$BUILD_NUM
           docker push $IMAGE_URI:latest
-
