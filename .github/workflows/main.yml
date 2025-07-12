@@ -1,4 +1,4 @@
-name: Fullstack ChatApp CI/CD to ECR (Latest + Version Tag)
+name: Fullstack ChatApp CI/CD to ECR (with version fallback)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     inputs:
       version:
         description: 'Tag version (e.g. v1.0.0)'
-        required: true
+        required: false
 
 jobs:
   build-frontend:
@@ -25,10 +25,17 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push frontend (latest + version)
+      - name: Set VERSION variable
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(echo $GITHUB_SHA | cut -c1-7)
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build and push frontend image
         run: |
           IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
-          VERSION=${{ github.event.inputs.version }}
           docker build -t $IMAGE_URI:latest -t $IMAGE_URI:$VERSION ./frontend
           docker push $IMAGE_URI:latest
           docker push $IMAGE_URI:$VERSION
@@ -48,10 +55,17 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push backend (latest + version)
+      - name: Set VERSION variable
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(echo $GITHUB_SHA | cut -c1-7)
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build and push backend image
         run: |
           IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
-          VERSION=${{ github.event.inputs.version }}
           docker build -t $IMAGE_URI:latest -t $IMAGE_URI:$VERSION ./backend
           docker push $IMAGE_URI:latest
           docker push $IMAGE_URI:$VERSION
