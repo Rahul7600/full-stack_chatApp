@@ -59,3 +59,4 @@ jobs:
           docker tag $IMAGE_URI:$BUILD_NUM $IMAGE_URI:latest
           docker push $IMAGE_URI:$BUILD_NUM
           docker push $IMAGE_URI:latest
+//
