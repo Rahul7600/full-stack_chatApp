@@ -16,7 +16,7 @@ env:
 
 jobs:
   build-deploy:
-    runs-on: self-hosted  # Your EC2 runner with Docker, kubectl, Minikube
+    runs-on: ubuntu-latest  # ✅ Changed from self-hosted to GitHub-hosted Ubuntu runner
 
     steps:
       - name: Checkout Code
@@ -52,10 +52,10 @@ jobs:
           docker push $BACKEND_REPO:latest
           docker push $BACKEND_REPO:$VERSION
 
-      - name: Deploy Frontend to Minikube
-        run: |
-          sed "s|__VERSION__|$VERSION|g" frontend-deployment.yaml | kubectl apply -n chat -f -
+      # - name: Deploy Frontend to Minikube
+      #   run: |
+      #     sed "s|__VERSION__|$VERSION|g" frontend-deployment.yaml | kubectl apply -n chat -f -
 
-      - name: Deploy Backend to Minikube
-        run: |
-          sed "s|__VERSION__|$VERSION|g" backend-deployment.yaml | kubectl apply -n chat -f -
+      # - name: Deploy Backend to Minikube
+      #   run: |
+      #     sed "s|__VERSION__|$VERSION|g" backend-deployment.yaml | kubectl apply -n chat -f -
