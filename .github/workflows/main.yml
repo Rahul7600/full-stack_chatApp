@@ -1,4 +1,4 @@
-name: Fullstack ChatApp CI/CD with ECR (build & push only)
+name: Fullstack ChatApp CI/CD to ECR (Latest + Version Tag)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Image tag version (e.g. v1.0.0)'
+        description: 'Optional image tag version (e.g. v1.0.0)'
         required: false
 
 env:
@@ -15,7 +15,7 @@ env:
   BACKEND_REPO: 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
 
 jobs:
-  build-deploy-frontend:
+  build-push-frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -31,7 +31,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set VERSION
+      - name: Set VERSION variable
         run: |
           VERSION="${{ github.event.inputs.version }}"
           if [ -z "$VERSION" ]; then
@@ -45,18 +45,9 @@ jobs:
           docker push $FRONTEND_REPO:latest
           docker push $FRONTEND_REPO:$VERSION
 
-      # - name: Setup kubeconfig
-      #   run: |
-      #     mkdir -p ~/.kube
-      #     echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
-
-      # - name: Deploy Frontend to Kubernetes
-      #   run: |
-      #     sed "s|__VERSION__|$VERSION|g" k8s/frontend-deployment.yaml | kubectl apply -f -
-
-  build-deploy-backend:
+  build-push-backend:
     runs-on: ubuntu-latest
-    needs: build-deploy-frontend
+    needs: build-push-frontend
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -71,7 +62,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set VERSION
+      - name: Set VERSION variable
         run: |
           VERSION="${{ github.event.inputs.version }}"
           if [ -z "$VERSION" ]; then
@@ -84,12 +75,3 @@ jobs:
           docker build -t $BACKEND_REPO:latest -t $BACKEND_REPO:$VERSION ./backend
           docker push $BACKEND_REPO:latest
           docker push $BACKEND_REPO:$VERSION
-
-      # - name: Setup kubeconfig
-      #   run: |
-      #     mkdir -p ~/.kube
-      #     echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
-
-      # - name: Deploy Backend to Kubernetes
-      #   run: |
-      #     sed "s|__VERSION__|$VERSION|g" k8s/backend-deployment.yaml | kubectl apply -f -
