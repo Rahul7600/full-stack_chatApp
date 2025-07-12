@@ -21,15 +21,10 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set build number
-        run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
-
-      - name: Build, tag, and push frontend image
+      - name: Build and push frontend image (latest only)
         run: |
           IMAGE=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
-          docker build -t $IMAGE:$BUILD_NUM ./frontend
-          docker tag $IMAGE:$BUILD_NUM $IMAGE:latest
-          docker push $IMAGE:$BUILD_NUM
+          docker build -t $IMAGE:latest ./frontend
           docker push $IMAGE:latest
 
   build-backend:
@@ -47,13 +42,8 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set build number
-        run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
-
-      - name: Build, tag, and push backend image
+      - name: Build and push backend image (latest only)
         run: |
           IMAGE=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
-          docker build -t $IMAGE:$BUILD_NUM ./backend
-          docker tag $IMAGE:$BUILD_NUM $IMAGE:latest
-          docker push $IMAGE:$BUILD_NUM
+          docker build -t $IMAGE:latest ./backend
           docker push $IMAGE:latest
