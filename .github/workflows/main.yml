@@ -12,28 +12,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ap-south-1
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Get short SHA for build number
-        id: vars
+      - name: Set build number
         run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Build, tag, and push frontend image
         run: |
-          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo
-          docker build -t $IMAGE_URI/frontend:${BUILD_NUM} ./frontend
-          docker tag $IMAGE_URI/frontend:${BUILD_NUM} $IMAGE_URI/frontend:latest
-          docker push $IMAGE_URI/frontend:${BUILD_NUM}
-          docker push $IMAGE_URI/frontend:latest
+          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
+          docker build -t $IMAGE_URI:$BUILD_NUM ./frontend
+          docker tag $IMAGE_URI:$BUILD_NUM $IMAGE_URI:latest
+          docker push $IMAGE_URI:$BUILD_NUM
+          docker push $IMAGE_URI:latest
 
   build-backend:
     runs-on: ubuntu-latest
@@ -41,25 +39,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ap-south-1
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Get short SHA for build number
-        id: vars
+      - name: Set build number
         run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Build, tag, and push backend image
         run: |
-          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo
-          docker build -t $IMAGE_URI/backend:${BUILD_NUM} ./backend
-          docker tag $IMAGE_URI/backend:${BUILD_NUM} $IMAGE_URI/backend:latest
-          docker push $IMAGE_URI/backend:${BUILD_NUM}
-          docker push $IMAGE_URI/backend:latest
+          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
+          docker build -t $IMAGE_URI:$BUILD_NUM ./backend
+          docker tag $IMAGE_URI:$BUILD_NUM $IMAGE_URI:latest
+          docker push $IMAGE_URI:$BUILD_NUM
+          docker push $IMAGE_URI:latest
