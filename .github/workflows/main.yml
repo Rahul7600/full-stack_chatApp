@@ -1,4 +1,4 @@
-name: Fullstack ChatApp CI/CD to ECR (with version fallback)
+name: Fullstack ChatApp CI/CD with ECR (build & push only)
 
 on:
   push:
@@ -6,26 +6,32 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Tag version (e.g. v1.0.0)'
+        description: 'Image tag version (e.g. v1.0.0)'
         required: false
 
+env:
+  AWS_REGION: ap-south-1
+  FRONTEND_REPO: 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
+  BACKEND_REPO: 223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
+
 jobs:
-  build-frontend:
+  build-deploy-frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set VERSION variable
+      - name: Set VERSION
         run: |
           VERSION="${{ github.event.inputs.version }}"
           if [ -z "$VERSION" ]; then
@@ -33,29 +39,39 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Build and push frontend image
+      - name: Build and Push Frontend Image
         run: |
-          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
-          docker build -t $IMAGE_URI:latest -t $IMAGE_URI:$VERSION ./frontend
-          docker push $IMAGE_URI:latest
-          docker push $IMAGE_URI:$VERSION
+          docker build -t $FRONTEND_REPO:latest -t $FRONTEND_REPO:$VERSION ./frontend
+          docker push $FRONTEND_REPO:latest
+          docker push $FRONTEND_REPO:$VERSION
 
-  build-backend:
+      # - name: Setup kubeconfig
+      #   run: |
+      #     mkdir -p ~/.kube
+      #     echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
+
+      # - name: Deploy Frontend to Kubernetes
+      #   run: |
+      #     sed "s|__VERSION__|$VERSION|g" k8s/frontend-deployment.yaml | kubectl apply -f -
+
+  build-deploy-backend:
     runs-on: ubuntu-latest
+    needs: build-deploy-frontend
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set VERSION variable
+      - name: Set VERSION
         run: |
           VERSION="${{ github.event.inputs.version }}"
           if [ -z "$VERSION" ]; then
@@ -63,9 +79,17 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Build and push backend image
+      - name: Build and Push Backend Image
         run: |
-          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
-          docker build -t $IMAGE_URI:latest -t $IMAGE_URI:$VERSION ./backend
-          docker push $IMAGE_URI:latest
-          docker push $IMAGE_URI:$VERSION
+          docker build -t $BACKEND_REPO:latest -t $BACKEND_REPO:$VERSION ./backend
+          docker push $BACKEND_REPO:latest
+          docker push $BACKEND_REPO:$VERSION
+
+      # - name: Setup kubeconfig
+      #   run: |
+      #     mkdir -p ~/.kube
+      #     echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
+
+      # - name: Deploy Backend to Kubernetes
+      #   run: |
+      #     sed "s|__VERSION__|$VERSION|g" k8s/backend-deployment.yaml | kubectl apply -f -
