@@ -9,8 +9,7 @@ jobs:
   build-frontend:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -22,22 +21,21 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set build number (short SHA)
+      - name: Set build number
         run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Build, tag, and push frontend image
         run: |
-          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
-          docker build -t $IMAGE_URI:$BUILD_NUM ./frontend
-          docker tag $IMAGE_URI:$BUILD_NUM $IMAGE_URI:latest
-          docker push $IMAGE_URI:$BUILD_NUM
-          docker push $IMAGE_URI:latest
+          IMAGE=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/frontend
+          docker build -t $IMAGE:$BUILD_NUM ./frontend
+          docker tag $IMAGE:$BUILD_NUM $IMAGE:latest
+          docker push $IMAGE:$BUILD_NUM
+          docker push $IMAGE:latest
 
   build-backend:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -49,13 +47,13 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Set build number (short SHA)
+      - name: Set build number
         run: echo "BUILD_NUM=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Build, tag, and push backend image
         run: |
-          IMAGE_URI=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
-          docker build -t $IMAGE_URI:$BUILD_NUM ./backend
-          docker tag $IMAGE_URI:$BUILD_NUM $IMAGE_URI:latest
-          docker push $IMAGE_URI:$BUILD_NUM
-          docker push $IMAGE_URI:latest
+          IMAGE=223319878711.dkr.ecr.ap-south-1.amazonaws.com/rahulrepo/backend
+          docker build -t $IMAGE:$BUILD_NUM ./backend
+          docker tag $IMAGE:$BUILD_NUM $IMAGE:latest
+          docker push $IMAGE:$BUILD_NUM
+          docker push $IMAGE:latest
