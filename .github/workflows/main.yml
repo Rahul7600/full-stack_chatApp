@@ -16,10 +16,7 @@ env:
 
 jobs:
   build-deploy:
-    runs-on: self-hosted  # EC2 runner with Minikube, Docker, kubectl
-    defaults:
-      run:
-        working-directory: ./chatapp
+    runs-on: self-hosted  # Your EC2 runner with Docker, kubectl, Minikube
 
     steps:
       - name: Checkout Code
