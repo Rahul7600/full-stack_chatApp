@@ -2,28 +2,24 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deployment
-  namespace: chat-app
+  namespace: chat
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: frontend
   template:
     metadata:
       name: frontend-pod
-      namespace: chat-app
+      namespace: chat
       labels: 
         app: frontend
     spec:
       containers:
       - name: chatapp-frontend
-        image: trainwithshubham/chatapp-frontend
+        image: rahul7600/chat-app-frontend:latest
         ports:
         - containerPort: 80
         env:
         - name: NODE_ENV
           value: production
-          
-
-
-

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend-deployment
-  namespace: chat-app
+  namespace: chat
 spec:
   replicas: 1
   selector:
@@ -11,13 +11,13 @@ spec:
   template:
     metadata:
       name: backend-pod
-      namespace: chat-app
+      namespace: chat
       labels: 
         app: backend
     spec:
       containers:
       - name: chatapp-backend
-        image: trainwithshubham/chatapp-backend:latest
+        image: rahul7600/chat-app-backend:latest
         ports:
         - containerPort: 5001
         env:
