@@ -10,16 +10,29 @@ spec:
       app: frontend
   template:
     metadata:
-      name: frontend-pod
-      namespace: chat
       labels: 
         app: frontend
     spec:
       containers:
       - name: chatapp-frontend
-        image: rahul7600/chat-app-frontend:latest
+        image: rahulray760/chatapp-frontend
         ports:
         - containerPort: 80
         env:
         - name: NODE_ENV
           value: production
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: chat
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
+
