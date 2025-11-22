@@ -27,7 +27,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: chatapp-secrets
-              key: jwt 
+              key: jwt
         - name: PORT
           value: "5001"
 ---

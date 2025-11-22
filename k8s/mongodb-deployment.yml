@@ -1,3 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+  namespace: chat
+spec:
+  storageClassName: ebs-gp3   # <-- match existing StorageClass
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,9 +23,7 @@ spec:
       app: mongodb
   template:
     metadata:
-      name: mongodb-pod
-      namespace: chat
-      labels: 
+      labels:
         app: mongodb
     spec:
       containers:
@@ -25,10 +36,25 @@ spec:
           value: mongoadmin
         - name: MONGO_INITDB_ROOT_PASSWORD
           value: secret
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
       volumes:
       - name: mongo-data
         persistentVolumeClaim:
-          claimName: mongodb-pvc   
-
-
+          claimName: mongodb-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: chat
+spec:
+  type: ClusterIP
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
 
